@@ -7,6 +7,7 @@ import { sign } from "crypto";
 import { DeploymentState } from "./scripts/types";
 import fs from "fs";
 import { BigNumber } from "@ethersproject/bignumber";
+import { deployBorrowLogic, deploySupplyLogic } from "./scripts/01_logic_libs";
 
 program
   .requiredOption(
@@ -60,23 +61,31 @@ if (fs.existsSync(opts.state)) {
   state = {};
 }
 
-
-let gasPrice: number | undefined
+let gasPrice: number | undefined;
 try {
-  gasPrice = opts.gasPrice ? parseInt(opts.gasPrice) : undefined
+  gasPrice = opts.gasPrice ? parseInt(opts.gasPrice) : undefined;
 } catch (error) {
-  console.error('Failed to parse gas price', (error as Error).message)
-  process.exit(1)
+  console.error("Failed to parse gas price", (error as Error).message);
+  process.exit(1);
 }
 
-
 async function run() {
-  
-  const BNGasPrice = typeof gasPrice === 'number' ? BigNumber.from(gasPrice).mul(BigNumber.from(10).pow(9)) : undefined 
+  const BNGasPrice =
+    typeof gasPrice === "number"
+      ? BigNumber.from(gasPrice).mul(BigNumber.from(10).pow(9))
+      : undefined;
+  const deployConfig = { signer: wallet, gasPrice: BNGasPrice };
   //deploy Provider Registry
-  const registryRef = await deployRegistry(state, {signer: wallet, gasPrice: BNGasPrice, owner: wallet.address});
+  const registry = await deployRegistry(state, {
+    ...deployConfig,
+    owner: wallet.address,
+  });
   //deploy logic libraries
-  console.log(registryRef)
+  console.log(registry);
+  const supplylib = await deploySupplyLogic(state, deployConfig);
+  const borrowlib = await deployBorrowLogic(state, deployConfig);
+  console.log(supplylib);
+  console.log(borrowlib);
 }
 
 run().then();
