@@ -4,6 +4,9 @@ import { version } from "./package.json";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import { deployRegistry } from "./scripts/00_markets_registry";
 import { sign } from "crypto";
+import { DeploymentState } from "./scripts/types";
+import fs from "fs";
+import { BigNumber } from "@ethersproject/bignumber";
 
 program
   .requiredOption(
@@ -13,6 +16,11 @@ program
   .requiredOption(
     "-j, --json-rpc <url>",
     "JSON RPC URL where the program should be deployed"
+  )
+  .option(
+    "-s, --state <path>",
+    "Path to the JSON file containing the migrations state (optional)",
+    "./state.json"
   );
 
 program.name("vulcan").version(version).parse(process.argv);
@@ -37,10 +45,38 @@ const wallet = new Wallet(
   new JsonRpcProvider({ url: url.href })
 );
 
+let state: DeploymentState;
+if (fs.existsSync(opts.state)) {
+  try {
+    state = JSON.parse(fs.readFileSync(opts.state, { encoding: "utf8" }));
+  } catch (error) {
+    console.error(
+      "Failed to load and parse migration state file",
+      (error as Error).message
+    );
+    process.exit(1);
+  }
+} else {
+  state = {};
+}
+
+
+let gasPrice: number | undefined
+try {
+  gasPrice = opts.gasPrice ? parseInt(opts.gasPrice) : undefined
+} catch (error) {
+  console.error('Failed to parse gas price', (error as Error).message)
+  process.exit(1)
+}
+
+
 async function run() {
-  console.log(opts);
-  const { registryProvider } = await deployRegistry({ signer: wallet });
-  console.log(registryProvider);
+  
+  const BNGasPrice = typeof gasPrice === 'number' ? BigNumber.from(gasPrice).mul(BigNumber.from(10).pow(9)) : undefined 
+  //deploy Provider Registry
+  const registryRef = await deployRegistry(state, {signer: wallet, gasPrice: BNGasPrice, owner: wallet.address});
+  //deploy logic libraries
+  console.log(registryRef)
 }
 
 run().then();
