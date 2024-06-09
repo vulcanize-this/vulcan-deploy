@@ -7,7 +7,16 @@ import { sign } from "crypto";
 import { DeploymentState } from "./scripts/types";
 import fs from "fs";
 import { BigNumber } from "@ethersproject/bignumber";
-import { deployBorrowLogic, deploySupplyLogic } from "./scripts/01_logic_libs";
+import {
+  deployBorrowLogic,
+  deployLiquidationLogic,
+  deploySupplyLogic,
+  deployemodeLogic,
+  deployBridgeLogic,
+  deployConfiguratorLogic,
+  deployPoolLogic,
+  deployFlashLoanLogic,
+} from "./scripts/01_logic_libs";
 
 program
   .requiredOption(
@@ -80,12 +89,17 @@ async function run() {
     ...deployConfig,
     owner: wallet.address,
   });
-  //deploy logic libraries
-  console.log(registry);
-  const supplylib = await deploySupplyLogic(state, deployConfig);
-  const borrowlib = await deployBorrowLogic(state, deployConfig);
-  console.log(supplylib);
-  console.log(borrowlib);
+  //deploy logic libraries, do it individually instead of a tight loop due to nonce errors
+  await deployBorrowLogic(state, deployConfig);
+  await deploySupplyLogic(state, deployConfig);
+  await deployemodeLogic(state, deployConfig);
+  await deployLiquidationLogic(state, deployConfig);
+  await deployBridgeLogic(state, deployConfig);
+  await deployConfiguratorLogic(state, deployConfig);
+  await deployPoolLogic(state, deployConfig);
+  //deploy flashloan
+  await deployFlashLoanLogic(state, deployConfig);
+  console.log(state);
 }
 
 run().then();
