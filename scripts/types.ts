@@ -11,6 +11,9 @@ export interface DeploymentState {
   ConfiguratorLogic?: string;
   FlashLoanLogic?: string;
   PoolLogic?: string;
+  TreasuryProxy?: string;
+  TreasuryController?: string;
+  TreasuryImplementation?: string;
 }
 
 export type DeploymentConfig = {

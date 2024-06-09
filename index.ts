@@ -3,7 +3,6 @@ import { Wallet } from "@ethersproject/wallet";
 import { version } from "./package.json";
 import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import { deployRegistry } from "./scripts/00_markets_registry";
-import { sign } from "crypto";
 import { DeploymentState } from "./scripts/types";
 import fs from "fs";
 import { BigNumber } from "@ethersproject/bignumber";
@@ -17,6 +16,15 @@ import {
   deployPoolLogic,
   deployFlashLoanLogic,
 } from "./scripts/01_logic_libs";
+import { abi as TreasuryInterface } from "./artifacts/contracts/treasury/AaveEcosystemReserveV2.sol/AaveEcosystemReserveV2.json";
+import { abi as TreasuryProxyInterface } from "./artifacts/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol/InitializableAdminUpgradeabilityProxy.json";
+import {
+  deployTreasuryController,
+  deployTreasuryImpl,
+  deployTreasuryProxy,
+} from "./scripts/02_treasury";
+import { Contract } from "@ethersproject/contracts";
+import { ZERO_ADDRESS } from "./scripts/utils/constants";
 
 program
   .requiredOption(
@@ -99,6 +107,44 @@ async function run() {
   await deployPoolLogic(state, deployConfig);
   //deploy flashloan
   await deployFlashLoanLogic(state, deployConfig);
+
+  //deploy treasury proxy
+  await deployTreasuryProxy(state, deployConfig);
+
+  //deploy treasury controller
+  await deployTreasuryController(state, {
+    ...deployConfig,
+    owner: wallet.address,
+  });
+
+  //deploy tresury Reserve
+  await deployTreasuryImpl(state, deployConfig);
+
+  //initialize the treasury code
+  if (state.TreasuryImplementation && state.TreasuryProxy) {
+    const tiContract = new Contract(
+      state.TreasuryImplementation,
+      TreasuryInterface,
+      wallet
+    );
+    await tiContract["initialize"](ZERO_ADDRESS);
+    const payload = tiContract.interface.encodeFunctionData("initialize", [
+      state.TreasuryController,
+    ]);
+
+    //initialize the proxy
+    const proxy = new Contract(
+      state.TreasuryProxy,
+      TreasuryProxyInterface,
+      wallet
+    );
+
+    await proxy["initialize(address,address,bytes)"](
+      state.TreasuryImplementation,
+      wallet.address,
+      payload
+    );
+  }
   console.log(state);
 }
 

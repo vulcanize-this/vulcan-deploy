@@ -1,4 +1,3 @@
-import { ContractFactory } from "@ethersproject/contracts";
 import BorrowLogic from "../artifacts/contracts/protocol/libraries/logic/BorrowLogic.sol/BorrowLogic.json";
 import SupplyLogic from "../artifacts/contracts/protocol/libraries/logic/SupplyLogic.sol/SupplyLogic.json";
 import LiquidationLogic from "../artifacts/contracts/protocol/libraries/logic/LiquidationLogic.sol/LiquidationLogic.json";
