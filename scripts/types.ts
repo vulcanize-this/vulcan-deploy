@@ -14,6 +14,7 @@ export interface DeploymentState {
   TreasuryProxy?: string;
   TreasuryController?: string;
   TreasuryImplementation?: string;
+  PoolAddressProvider?: string;
 }
 
 export type DeploymentConfig = {
