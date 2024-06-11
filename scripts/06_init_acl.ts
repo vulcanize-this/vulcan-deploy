@@ -4,7 +4,7 @@ import ACLManagerArtifact from "../artifacts/contracts/protocol/configuration/AC
 // Import Main Deploy Script Functions
 import createDeployment from "./utils/createDeployment";
 
-// Deploy Pool Configurator
+// Deploy ACL Manager
 export const deployACLManager = createDeployment({
     key: "ACLManager",
     artifact: ACLManagerArtifact,
