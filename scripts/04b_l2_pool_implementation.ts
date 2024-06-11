@@ -22,5 +22,65 @@ export const deployAddressProvider = createDeployment({
         }
         return [poolProvider]
     },
+    computeLibs(state,config) {
+        if (state.LiquidationLogic === undefined) {
+            throw new Error(
+                "LiquidationLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.SupplyLogic === undefined) {
+            throw new Error(
+                "SupplyLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.EModeLogic === undefined) {
+            throw new Error(
+                "EModeLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.FlashLoanLogic === undefined) {
+            throw new Error(
+                "FlashLoanLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.BorrowLogic === undefined) {
+            throw new Error(
+                "BorrowLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.BridgeLogic === undefined) {
+            throw new Error(
+                "BridgeLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.PoolLogic === undefined) {
+            throw new Error(
+                "PoolLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        if (state.CalldataLogic === undefined) {
+            throw new Error(
+                "CalldataLogic address not provided to deploy Pool contract"
+            );
+        }
+
+        return {
+            ["LiquidationLogic"]: state.LiquidationLogic,
+            ["SupplyLogic"]: state.SupplyLogic,
+            ["EModeLogic"]: state.EModeLogic,
+            ["FlashLoanLogic"]: state.FlashLoanLogic,
+            ["BorrowLogic"]: state.BorrowLogic,
+            ["BridgeLogic"]: state.BridgeLogic,
+            ["PoolLogic"]: state.PoolLogic,
+            ["CalldataLogic"]: state.CalldataLogic,
+        };
+    },
     
 })
