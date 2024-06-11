@@ -16,6 +16,8 @@ import {
   deployPoolLogic,
   deployFlashLoanLogic,
 } from "./scripts/01_logic_libs";
+import { abi as PoolAddressesProviderAbi } from "./artifacts/contracts/protocol/configuration/PoolAddressesProvider.sol/PoolAddressesProvider.json";
+import { abi as PoolRegistryAbi } from "./artifacts/contracts/protocol/configuration/PoolAddressesProviderRegistry.sol/PoolAddressesProviderRegistry.json";
 import { abi as TreasuryInterface } from "./artifacts/contracts/treasury/AaveEcosystemReserveV2.sol/AaveEcosystemReserveV2.json";
 import { abi as TreasuryProxyInterface } from "./artifacts/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol/InitializableAdminUpgradeabilityProxy.json";
 import {
@@ -25,6 +27,7 @@ import {
 } from "./scripts/02_treasury";
 import { Contract } from "@ethersproject/contracts";
 import { ZERO_ADDRESS } from "./scripts/utils/constants";
+import { deployAddressProvider } from "./scripts/03_setup_address_provider";
 
 program
   .requiredOption(
@@ -86,14 +89,14 @@ try {
   process.exit(1);
 }
 
-async function run() {
+async function runCore() {
   const BNGasPrice =
     typeof gasPrice === "number"
       ? BigNumber.from(gasPrice).mul(BigNumber.from(10).pow(9))
       : undefined;
   const deployConfig = { signer: wallet, gasPrice: BNGasPrice };
   //deploy Provider Registry
-  const registry = await deployRegistry(state, {
+  await deployRegistry(state, {
     ...deployConfig,
     owner: wallet.address,
   });
@@ -108,6 +111,16 @@ async function run() {
   //deploy flashloan
   await deployFlashLoanLogic(state, deployConfig);
 
+  console.log(state);
+}
+
+async function createMarket() {
+  const BNGasPrice =
+    typeof gasPrice === "number"
+      ? BigNumber.from(gasPrice).mul(BigNumber.from(10).pow(9))
+      : undefined;
+
+  const deployConfig = { signer: wallet, gasPrice: BNGasPrice };
   //deploy treasury proxy
   await deployTreasuryProxy(state, deployConfig);
 
@@ -127,10 +140,8 @@ async function run() {
       TreasuryInterface,
       wallet
     );
+
     await tiContract["initialize"](ZERO_ADDRESS);
-    const payload = tiContract.interface.encodeFunctionData("initialize", [
-      state.TreasuryController,
-    ]);
 
     //initialize the proxy
     const proxy = new Contract(
@@ -139,13 +150,41 @@ async function run() {
       wallet
     );
 
+    const payload = tiContract.interface.encodeFunctionData("initialize", [
+      state.TreasuryController,
+    ]);
+
     await proxy["initialize(address,address,bytes)"](
       state.TreasuryImplementation,
       wallet.address,
       payload
     );
   }
-  console.log(state);
+
+  //deploy address providers
+  await deployAddressProvider(state, {
+    ...deployConfig,
+    owner: wallet.address,
+  });
+
+  //set market id
+  if (state.PoolAddressProvider && state.PoolAddressesProviderRegistry) {
+    const pap = new Contract(
+      state.PoolAddressProvider,
+      PoolAddressesProviderAbi,
+      wallet
+    );
+    await pap["setMarketId"]("Vulcan Market");
+
+    //add market to registry.
+    const registry = new Contract(
+      state.PoolAddressesProviderRegistry,
+      PoolRegistryAbi,
+      wallet
+    );
+
+    await registry["registerAddressesProvider"](state.PoolAddressProvider, 1);
+  }
 }
 
-run().then();
+//runCore().then();
