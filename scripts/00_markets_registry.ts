@@ -10,7 +10,7 @@ export const deployRegistry = createDeployment({
     artifact: PoolRegistryArtifact,
     argsFn(state, {owner}) {
         if (owner === undefined) {
-            throw new Error(`Missing Deployer address in Registry Provider`)
+            throw new Error(`Missing Deployer address in Pool Addresses Provider Registry`)
         }
         return [owner]
     },

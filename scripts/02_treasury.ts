@@ -1,13 +1,18 @@
-import createDeployment from "./utils/createDeployment";
+// Import JSON Artifacts from Contracts
 import proxyArtifact from "../artifacts/contracts/dependencies/openzeppelin/upgradeability/InitializableAdminUpgradeabilityProxy.sol/InitializableAdminUpgradeabilityProxy.json";
 import treasuryControllerArtifact from "../artifacts/contracts/treasury/AaveEcosystemReserveController.sol/AaveEcosystemReserveController.json";
 import treasuryReserve from "../artifacts/contracts/treasury/AaveEcosystemReserveV2.sol/AaveEcosystemReserveV2.json";
 
+// Import Main Deploy Script Functions
+import createDeployment from "./utils/createDeployment";
+
+// Deploy TreasuryProxy
 export const deployTreasuryProxy = createDeployment({
   key: "TreasuryProxy",
   artifact: proxyArtifact,
 });
 
+// Deploy TreasuryController
 export const deployTreasuryController = createDeployment({
   key: "TreasuryController",
   artifact: treasuryControllerArtifact,
@@ -19,6 +24,7 @@ export const deployTreasuryController = createDeployment({
 },
 });
 
+// Deploy TreasuryImplementation
 export const deployTreasuryImpl = createDeployment({
   key: "TreasuryImplementation",
   artifact: treasuryReserve,
